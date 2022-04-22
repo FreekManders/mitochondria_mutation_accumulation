@@ -30,7 +30,7 @@ plot_gene = function(annotate_df, length_correction = FALSE){
         dplyr::mutate(strand = dplyr::recode(strand, "1" = "+", "-1" = "-"),
                       gene = paste0(gene, " (", strand, ")"),
                       gene = factor(gene, levels = sort(unique(gene))),
-                      state_name = factor(state_name, levels = unique(state_name))) %>% 
+                      state_name = droplevels(state_name)) %>% 
         dplyr::group_by(state_name, gene, length, .drop = FALSE) %>% 
         dplyr::count(.drop = FALSE) %>% 
         dplyr::ungroup() %>% 
@@ -53,7 +53,7 @@ plot_gene = function(annotate_df, length_correction = FALSE){
         labs(fill = fill_label, x = "", y = "Gene") +
         theme_BM() +
         my_theme +
-        theme(axis.text.x = element_text(angle = 90, hjust = 0.95, vjust = 0.5, size = 6, family = "Arial"))
+        theme(axis.text.x = element_text(angle = 45, hjust = 0.5, vjust = 0.5, size = 6, family = "Arial"))
     
     return(fig)
 }

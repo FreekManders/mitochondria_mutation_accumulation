@@ -34,7 +34,7 @@ load_all("~/surfdrive/Shared/vanBoxtelLab (Groupfolder)/Projects/Freek/Mutationa
 # model selection fetus cnv.
 
 #Source functions
-function_wd <- "~/surfdrive/Shared/vanBoxtelLab (Groupfolder)/Projects/Freek/mito/scripts/local_functions/"
+function_wd <- "~/surfdrive/Shared/vanBoxtelLab (Groupfolder)/Projects/Freek/mito/mitochondria_mutation_accumulation/local_functions/"
 functions_list <- list.files(function_wd, pattern = '.R$', ignore.case = T, full.names = T)
 purrr::walk(functions_list, source)
 
