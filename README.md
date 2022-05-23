@@ -1,6 +1,6 @@
-# Normal mutation accumulation causes the majority of mitochondrial mutations in cancer
+# Mutations in mitochondrial DNA of cancers resembles mutagenesis in normal stem cells
 
-Scripts written for the manuscript: Normal mutation accumulation causes the majority of mitochondrial mutations in cancer
+Scripts written for the manuscript: Mutations in mitochondrial DNA of cancers resembles mutagenesis in normal stem cells
 
 A description of the analyses performed by these scripts can be found in the paper.
 
