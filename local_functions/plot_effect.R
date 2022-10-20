@@ -7,7 +7,7 @@ plot_effect = function(annotate_df){
     plot <- ggplot(annotate_df, aes(x = effect)) +
         geom_bar(stat = 'count', aes(fill = effect)) +
         labs(x = 'Predicted effect', y = "Nr. substitutions") +
-        scale_fill_manual(values = c('green','orange','red'), drop = FALSE, guide = FALSE) +
+        scale_fill_manual(values = c('green','orange','red'), drop = FALSE, guide = "none") +
         scale_x_discrete(drop = FALSE) +
         facet_wrap(. ~ state_name, nrow =1) +
         theme_BM() +
@@ -26,7 +26,7 @@ plot_gene = function(annotate_df, length_correction = FALSE){
     # Count mutations per gene
     count_tb = annotate_df %>%
         dplyr::filter(bulk == "clone") %>%
-        dplyr::filter(!duplicated(variant)) %>% # Remove duplicate variants. Because these are shared within a single sample, the duplicates can be removed without causing issues with the groups..
+        dplyr::filter(!duplicated(variant)) %>% # Remove duplicate variants. Because these are shared within a single donor, the duplicates can be removed without causing issues with the groups..
         dplyr::mutate(strand = dplyr::recode(strand, "1" = "+", "-1" = "-"),
                       gene = paste0(gene, " (", strand, ")"),
                       gene = factor(gene, levels = sort(unique(gene))),

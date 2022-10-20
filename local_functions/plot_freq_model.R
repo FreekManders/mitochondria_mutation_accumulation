@@ -34,6 +34,18 @@ plot_freq_model = function(model, var){
     return(ageline_fig)
 }
 
+plot_first_vs_second_aml = function(df){
+    fig = ggplot(df, aes(x = age, y = freq, color = patient)) +
+        geom_point(size = 2) +
+        geom_line() +
+        labs(y = "Base substitutions per cancer", x = "Age (years)", color = "Patient") +
+        scale_color_manual(values = c("#264653", "#2a9d8f", "#e9c46a", "#f4a261", "#e76f51", "#283618")) +
+        theme_BM() +
+        my_theme
+    return(fig)
+}
+
+
 plot_aml_model = function(model){
     
     # Get data
@@ -265,6 +277,28 @@ plot_chemo_model = function(model){
                      size = 2)
     }
     return(ageline_fig)
+}
+
+plot_dx1_vs_leukemia = function(model){
+    df = model$data
+    
+    # Calculate pval
+    pval = as.numeric(calc_pval(model, 2))
+    
+    
+    fig = ggplot(df, aes(x = state_name, y = freq, color = state_name)) +
+        geom_boxplot(outlier.shape = NA, lwd = 0.25) +
+        #geom_jitter(size = 1, width = 0.2, height = 0) +
+        geom_quasirandom(size = 1, groupOnX = TRUE) +
+        facet_grid(. ~ patient) +
+        geom_text(data = data.frame(patient = df$patient[1], state_name = "Leukemia", freq = 4), color = "black", size = 2, label = paste0("P: ", round(pval, 4))) +
+        scale_color_manual(values = c("#91D1C2FF", "darkred")) +
+        guides(color = "none") +
+        labs(x = "", y = "Base substitutions per clone") +
+        theme_classic() +
+        my_theme +
+        theme(axis.text.x = element_text(angle = 90))
+    return(fig)
 }
 
 plot_cb_chemo = function(cb_chemo_freq){

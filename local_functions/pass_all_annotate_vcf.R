@@ -57,7 +57,7 @@ grab_all_variants<- function(vcf_l, mito_reference_df) {
                  gt = geno(x)$GT %>% 
                    as.data.frame %>% 
                    rownames_to_column(var = "variant")
-                 gt$filter <- fixed(x)$FILTER
+                 gt$filter <- VariantAnnotation::fixed(x)$FILTER
                  colnames(gt) <- c("variant","genotype",'filter')
                  return(gt)
                }) %>% 

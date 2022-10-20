@@ -75,5 +75,10 @@ filter_variants <- function(variant_df, all_variants, sample_reference_df) {
     filter(max_freq == 1 | patient_freq < max_freq) %>%
     # Filter for global occurrence. A variant can't occur in more than one patient
     filter(overall_freq <= patient_freq)
+  
+  # Remove variants that are shared and for which there is evidence in a bulk sample
+  bulk_shared_variants = dplyr::filter(all_variants, bulk == "bulk" & patient_freq > 1)
+  vdf = anti_join(vdf, bulk_shared_variants, by = c("patient", "genotype", "variant"))
+  
   return(vdf)
 }

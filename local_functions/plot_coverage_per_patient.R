@@ -1,5 +1,10 @@
 plot_coverage_per_patient = function(cnv_df){
-    cnv_df$patient = factor(cnv_df$patient, levels = unique(cnv_df$patient))
+    
+    patient_states = cnv_df %>% dplyr::filter(bulk == "clone") %>% dplyr::group_by(patient) %>% dplyr::summarise(state_name = state_name[[1]])
+    patient_order = patient_states[order(patient_states$state_name),"patient", drop = TRUE]
+    
+    #cnv_df$patient = factor(cnv_df$patient, levels = unique(cnv_df$patient))
+    cnv_df$patient = factor(cnv_df$patient, levels = patient_order)
     
     coverage_fig = ggplot(cnv_df, 
                           aes(x = patient, 

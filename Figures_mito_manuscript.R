@@ -32,8 +32,6 @@ intestine_ageline_fig = plot_ageline(intestine_glm_m) +
     ggtitle("Intestine") +
     labs(y = "")
 
-
-
 layout = matrix(c(1,1,1,2,3,4), nrow = 2, byrow = TRUE)
 pdf(file.path("Manuscript_figures", "Figure1.pdf"), width = 6.8, height = 5, useDingbats = FALSE)
 grid.arrange(coverage_fig, blood_ageline_fig, colon_ageline_fig, intestine_ageline_fig, layout_matrix = layout)
@@ -83,7 +81,6 @@ colon_age_fig = plot_pcawg_model(pcawg_colon_glm_m)
 
 
 layout = matrix(c(2,1,3,1), nrow = 2, byrow = TRUE)
-
 pdf(file.path("Manuscript_figures", "Figure3.pdf"), width = 6.8, height = 6, useDingbats = FALSE)
 grid.arrange(spectra_fig, blood_age_fig, colon_age_fig, layout_matrix = layout)
 dev.off()
@@ -98,12 +95,9 @@ dev.off()
 
 cancer2_m = readRDS(file.path(model_wd, "chemo_2nd_cancer_ageline.rds"))
 get_ci_params(cancer2_m)
-
 dx1_fu_dx2_cancer_m = readRDS(file.path(model_wd, "chemo_dx1_fu_dx2_ageline.rds"))
 get_ci_params(dx1_fu_dx2_cancer_m)
-
 cb_chemo_freq = readRDS(file.path(r_wd,"CB_chemo.rds"))
-
 cb_chemo_cnv = readRDS(file.path(r_wd, "CB_chemo_cnv.rds"))
 
 
@@ -123,23 +117,23 @@ dev.off()
 
 ### Figure 5
 
-hsct_m = readRDS(file.path(model_wd, "hsct_ageline.rds"))
-get_ci_params(hsct_m)
-bloodtype_m = readRDS(file.path(model_wd, "cnv_bloodtype_transplant.rds"))
-
-hsct_ageline_fig = plot_hsct_model(hsct_m) +
-    theme(plot.margin = unit(c(5.5, 5.5, 5.5, 11.5), "points"))
-
-bloodtype_hsct_cnv_fig = plot_cnv_model(bloodtype_m, var = "full_blood_type", col = "state", remove_guide = FALSE, plot_p = FALSE, size = 0.5) +
-    labs(x = "HSPC location", color = "State") +
-    theme(plot.margin = unit(c(5.5, 5.5, 5.5, 2.5), "points"))
-
-
-layout = matrix(c(1,1,2,2), nrow = 2, byrow = TRUE)
-
-pdf(file.path("Manuscript_figures", "Figure5.pdf"), width = 6.8, height = 4, useDingbats = FALSE)
-grid.arrange(hsct_ageline_fig, bloodtype_hsct_cnv_fig, layout_matrix = layout)
-dev.off()
+# hsct_m = readRDS(file.path(model_wd, "hsct_ageline.rds"))
+# get_ci_params(hsct_m)
+# bloodtype_m = readRDS(file.path(model_wd, "cnv_bloodtype_transplant.rds"))
+# 
+# hsct_ageline_fig = plot_hsct_model(hsct_m) +
+#     theme(plot.margin = unit(c(5.5, 5.5, 5.5, 11.5), "points"))
+# 
+# bloodtype_hsct_cnv_fig = plot_cnv_model(bloodtype_m, var = "full_blood_type", col = "state", remove_guide = FALSE, plot_p = FALSE, size = 0.5) +
+#     labs(x = "HSPC location", color = "State") +
+#     theme(plot.margin = unit(c(5.5, 5.5, 5.5, 2.5), "points"))
+# 
+# 
+# layout = matrix(c(1,1,2,2), nrow = 2, byrow = TRUE)
+# 
+# pdf(file.path("Manuscript_figures", "Figure5.pdf"), width = 6.8, height = 4, useDingbats = FALSE)
+# grid.arrange(hsct_ageline_fig, bloodtype_hsct_cnv_fig, layout_matrix = layout)
+# dev.off()
 
 
 ### Figure S1
@@ -147,13 +141,12 @@ per_base_fig = readRDS(file.path(plotdir, "per_base_coverage", "mitochondrial_co
 #per_base_fig2 = readRDS(file.path(plotdir, "per_base_coverage", "mitochondrial_coverage_HSCT14.rds"))
 somatic_variant_df = readRDS(file.path(r_wd, "somatic_variant_df.rds"))
 indel_df = readRDS(file.path(r_wd, "indel_df.rds"))
-cov_m = readRDS(file.path(model_wd, "sequencing_depth.rds"))
+#cov_m = readRDS(file.path(model_wd, "sequencing_depth.rds"))
 higher_lower_muts = readRDS(file.path(r_wd, "higher_lower_muts.rds"))
 #liver_freq = readRDS(file.path(r_wd, "liver_freq.rds"))
 freq_cnv_m = readRDS(file.path(model_wd, "freq_cnv.rds"))
 somatic_variant_annotate_length = readRDS(file.path(r_wd, "somatic_variant_annotate_length.rds"))
 somatic_variant_annotate = readRDS(file.path(r_wd, "somatic_variant_annotate.rds"))
-
 
 vaf_fig = plot_vaf_position(somatic_variant_df)
 indel_vaf_fig = plot_vaf_position(indel_df, muttype = "indel")
@@ -165,7 +158,7 @@ gene_length_fig = plot_gene(somatic_variant_annotate_length, length_correction =
     theme(plot.margin = unit(c(5.5, 5.5, 0.0, 5.5), "points"))
 effect_fig = plot_effect(somatic_variant_annotate) +
     theme(plot.margin = unit(c(0.0, 5.5, 8.5, 5.5), "points"))
-seqdepth_fig = plot_cov_model2(cov_m) 
+#seqdepth_fig = plot_cov_model2(cov_m) 
 freq_cnv_fig = plot_freq_cnv_model(freq_cnv_m)
 above_below_ageline_fig = plot_above_below_ageline(higher_lower_muts)
 #liver_ageline_fig = plot_liver_ageline(liver_freq)
@@ -173,63 +166,85 @@ above_below_ageline_fig = plot_above_below_ageline(higher_lower_muts)
 #agelines_sup_fig = ggarrange(seqdepth_fig, liver_ageline_fig, align = "v", common.legend = T, nrow = 2)
 #agelines_sup_fig = plot_grid(seqdepth_fig, liver_ageline_fig, align = "v", axis = "rl", nrow = 2)
 
-layout = matrix(c(1, 1, 2, 3, 2, 3, 4, 4, 5, 5, 6, 7, 8, 9), byrow = TRUE, nrow = 7)
-
+layout = matrix(c(1, 1, 2, 3, 2, 3, 4, 4, 5, 5, 6, 7), byrow = TRUE, nrow = 6)
 pdf(file.path("Manuscript_figures", "Supplemental_figure1.pdf"), width = 6.8, height = 10, useDingbats = FALSE)
 grid.arrange(per_base_fig, snv_fig, indel_fig, gene_length_fig, effect_fig, 
-             seqdepth_fig, freq_cnv_fig, above_below_ageline_fig, 
-             layout_matrix = layout, heights = c(0.3, 0.3, 0.3, 0.6, 0.4, 0.3, 0.3))
+             freq_cnv_fig, above_below_ageline_fig, 
+             layout_matrix = layout, heights = c(0.3, 0.3, 0.3, 0.6, 0.4, 0.3))
 dev.off()
 
 ### Figure S2
 cov_cnv_m = readRDS(file.path(model_wd, "cnv_cov.rds"))
 #liver_cnv = readRDS(file.path(r_wd, "liver_cnv.rds"))
 
-
 seqdepth_cnv_fig = plot_cnv_model(cov_cnv_m, var = "cov") + xlab("Sequencing depth")
 #liver_cnv_ageline_fig = plot_cnv_liver_ageline(liver_cnv)
 
 layout = matrix(c(1, 2), byrow = TRUE, nrow = 1)
-
 pdf(file.path("Manuscript_figures", "Supplemental_figure2.pdf"), width = 6.8, height = 4, useDingbats = FALSE)
 grid.arrange(seqdepth_cnv_fig, layout_matrix = layout)
 dev.off()
 
 ### Figure S3
-blood_cnv_fig = readRDS("plot/pcawg/Healthy blood/pcawg_Blood cancer_vs_healthy_cnv.rds")
-colon_cnv_fig = readRDS("plot/pcawg/Normal colon/pcawg_Colon cancer_vs_healthy_cnv.rds")
+blood_effect_type_tbl = readRDS("plot/pcawg/Healthy blood/tissue_pcawg_spectra/Blood cancer_effect_type_tbl.rds")
+colon_effect_type_tbl = readRDS("plot/pcawg/Normal colon/tissue_pcawg_spectra/Colon cancer_effect_type_tbl.rds")
+blood_position_tbl = readRDS("plot/pcawg/Healthy blood/tissue_pcawg_spectra/Blood cancer_position_tbl.rds")
+colon_position_tbl = readRDS("plot/pcawg/Normal colon/tissue_pcawg_spectra/Colon cancer_position_tbl.rds")
+highlow_blood_position_tbl = readRDS("plot/pcawg/Healthy blood/high_vs_low_mut_pcawg_spectra/Blood cancer: High_position_tbl.rds")
+highlow_colon_position_tbl = readRDS("plot/pcawg/Normal colon/high_vs_low_mut_pcawg_spectra/Colon cancer: High_position_tbl.rds")
+blood_pcawg_vs_healthy_cnv = readRDS("plot/pcawg/Healthy blood/pcawg_Blood cancer_vs_healthy_cnv.rds")
+colon_pcawg_vs_healthy_cnv = readRDS("plot/pcawg/Normal colon/pcawg_Colon cancer_vs_healthy_cnv.rds")
 mut_mat = readRDS(file.path(plotdir, "pcawg", "blood_colon_mut_mat.rds"))
+aml_cnv = readRDS(file.path(r_wd, "aml_cnv.rds"))
+
+blood_effect_type_fig = plot_effect_type(blood_effect_type_tbl)
+colon_effect_type_fig = plot_effect_type(colon_effect_type_tbl)
+blood_position_fig = plot_bin_distribution(blood_position_tbl)
+colon_position_fig = plot_bin_distribution(colon_position_tbl)
+highlow_blood_position_fig = plot_bin_distribution(highlow_blood_position_tbl)
+highlow_colon_position_fig = plot_bin_distribution(highlow_colon_position_tbl)
+blood_cnv_fig = plot_pcawg_healthy_vs_cnv(blood_pcawg_vs_healthy_cnv)
+colon_cnv_fig = plot_pcawg_healthy_vs_cnv(colon_pcawg_vs_healthy_cnv)
+colnames(mut_mat) = str_remove(colnames(mut_mat), " \\n.*")
 blood_colon_profile_fig = plot_96_profile(mut_mat, condensed = TRUE) +
     spectrum_theme
-aml_cnv = readRDS(file.path(r_wd, "aml_cnv.rds"))
 aml_cnv_fig = plot_aml_cnv_model(aml_cnv)
 
-layout = matrix(c(1, 1, 2, 3, 4, 5), byrow = TRUE, nrow = 3)
-pdf(file.path("Manuscript_figures", "Supplemental_figure3.pdf"), width = 6.8, height = 6, useDingbats = FALSE)
-grid.arrange(blood_colon_profile_fig, blood_cnv_fig, colon_cnv_fig, aml_cnv_fig, layout_matrix = layout)
+layout = matrix(c(1, 2, 3, 4, 5, 6, 7, 8, 9, 10), byrow = TRUE, nrow = 5)
+pdf(file.path("Manuscript_figures", "Supplemental_figure3.pdf"), width = 6.8, height = 10, useDingbats = FALSE)
+grid.arrange(blood_effect_type_fig, blood_position_fig, 
+             highlow_blood_position_fig, blood_colon_profile_fig,
+             colon_effect_type_fig, colon_position_fig, 
+             highlow_colon_position_fig, blood_cnv_fig, 
+             colon_cnv_fig, aml_cnv_fig, 
+             layout_matrix = layout)
 dev.off()
 
 ### Figure S4
 chemo_cancer_cnv_m = readRDS(file.path(model_wd, "cnv_chemo_2ndcancer.rds"))
+dx1_vs_leukemia_m = readRDS(file.path(model_wd, "dx1_vs_leukemia.rds"))
+first_vs_second_cancer_freq = readRDS(file.path(model_wd, "first_vs_second_cancer_freq.rds"))
+
 chemo_cnv_fig = plot_cnv_model(chemo_cancer_cnv_m, plot_p = FALSE)
+dx1_vs_leukemia_fig = plot_dx1_vs_leukemia(dx1_vs_leukemia_m)
+first_vs_second_cancer_fig = plot_first_vs_second_aml(first_vs_second_cancer_freq)
 
-
-#layout = matrix(c(1, 2, 3, 3, 3, 3), byrow = TRUE, nrow = 3)
+layout = matrix(c(1, 2, 3), byrow = TRUE, nrow = 3)
 pdf(file.path("Manuscript_figures", "Supplemental_figure4.pdf"), width = 6.8, height = 6, useDingbats = FALSE)
-chemo_cnv_fig
+grid.arrange(chemo_cnv_fig, dx1_vs_leukemia_fig, first_vs_second_cancer_fig, layout_matrix = layout)
 dev.off()
 
 
 ### Figure S5
-hsct_cnv_m = readRDS(file.path(model_wd, "cnv_hsct.rds"))
-recipient_m = readRDS(file.path(model_wd, "cnv_hsct_time.rds"))
-
-mean_recipient_fig = plot_mean_hsct_cnv(hsct_cnv_m$data) + theme(plot.margin = unit(c(5.5,5.5,5.5,10), "pt"))
-recipient_fig = plot_recipient_time_model(recipient_m)
-
-pdf(file.path("Manuscript_figures", "Supplemental_figure5.pdf"), width = 6.8, height = 4, useDingbats = FALSE)
-ggarrange(mean_recipient_fig, recipient_fig, nrow = 2)
-dev.off()
+# hsct_cnv_m = readRDS(file.path(model_wd, "cnv_hsct.rds"))
+# recipient_m = readRDS(file.path(model_wd, "cnv_hsct_time.rds"))
+# 
+# mean_recipient_fig = plot_mean_hsct_cnv(hsct_cnv_m$data) + theme(plot.margin = unit(c(5.5,5.5,5.5,10), "pt"))
+# recipient_fig = plot_recipient_time_model(recipient_m)
+# 
+# pdf(file.path("Manuscript_figures", "Supplemental_figure5.pdf"), width = 6.8, height = 4, useDingbats = FALSE)
+# ggarrange(mean_recipient_fig, recipient_fig, nrow = 2)
+# dev.off()
 
 
 

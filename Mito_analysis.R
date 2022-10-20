@@ -61,19 +61,45 @@ my_theme = theme(text = element_text(size = 6, family = "Arial"),
                  legend.margin = margin(t = 0, r = 0, b = 0, l = 0, unit = "pt")
 )
 
+# spectrum_theme = theme(text = element_text(size = 6, family = "Arial"),
+#       legend.background = element_rect(fill="transparent", colour=NA),
+#       legend.key = element_rect(fill="transparent", colour=NA),
+#       axis.text = element_text(size = rel(1), 
+#                                colour = "black"),
+#       axis.line = element_line(size = 0.25),
+#       plot.title = element_text(hjust = 0.5),
+#       strip.background = element_rect(size = 0.5),
+#       panel.border = element_rect(size = 0.25),
+#       legend.key.size = unit(0.3, 'cm'),
+#       plot.margin = unit(c(5.5,5.5,5.5,5.5), "pt"),
+#       legend.margin = margin(t = 0, r = 0, b = 0, l = 0, unit = "pt")
+# )
+
 spectrum_theme = theme(text = element_text(size = 6, family = "Arial"),
-      legend.background = element_rect(fill="transparent", colour=NA),
-      legend.key = element_rect(fill="transparent", colour=NA),
-      axis.text = element_text(size = rel(1), 
-                               colour = "black"),
-      axis.line = element_line(size = 0.25),
-      plot.title = element_text(hjust = 0.5),
-      strip.background = element_rect(size = 0.5),
-      panel.border = element_rect(size = 0.25),
-      legend.key.size = unit(0.3, 'cm'),
-      plot.margin = unit(c(5.5,5.5,5.5,5.5), "pt"),
-      legend.margin = margin(t = 0, r = 0, b = 0, l = 0, unit = "pt")
+                       legend.background = element_rect(fill="transparent", colour=NA),
+                       legend.key = element_rect(fill="transparent", colour=NA),
+                       axis.text = element_text(size = rel(1), 
+                                                colour = "black"),
+                       axis.ticks.x = element_line(colour = "black", size = 0.25),
+                       axis.ticks.y = element_line(colour = "black", size = 0.25),
+                       axis.ticks.length=unit(0.05, "cm"),
+                       axis.line = element_line(size = 0.25),
+                       plot.title = element_text(hjust = 0.5),
+                       strip.background = element_rect(size = 0.5),
+                       panel.border = element_rect(size = 0.25),
+                       legend.key.size = unit(0.3, 'cm'),
+                       plot.margin = unit(c(5.5,5.5,5.5,5.5), "pt"),
+                       legend.margin = margin(t = 0, r = 0, b = 0, l = 0, unit = "pt"),
+                       axis.title.y = element_text(size = 6, vjust = 1),
+                       axis.text.y = element_text(size = 6),
+                       axis.title.x = element_text(size = 6),
+                       axis.text.x = element_text(size = 2.5, angle = 90, vjust = 0.5),
+                       strip.text.x = element_text(size = 6),
+                       strip.text.y = element_text(size = 6),
+                       legend.text=element_text(size=6),
+                       panel.spacing.y = unit(0.2, "lines")
 )
+
 #Basic settings
 main_dir = "~/surfdrive/Shared/vanBoxtelLab (Groupfolder)/Projects/Freek/mito"
 plotdir <- file.path(main_dir, "plot")
@@ -176,8 +202,21 @@ tibble("mean_depth" = mean_depth,
        "upper_25" = quantiles[4])
 
 # Get somatic variants
-somatic_variant_df = get_somatic_variant_df(ref_genome, vcf_wd, vcf_filter, sample_reference_df, low_vaf_filter, high_vaf_filter) %>% 
+somatic_variant_df_raw = get_somatic_variant_df(ref_genome, vcf_wd, vcf_filter, sample_reference_df, low_vaf_filter, high_vaf_filter) %>%
+  dplyr::filter(!(patient_freq > 1 & state == "CB_Chemo")) %>% 
   dplyr::filter(!variant %in% c("MT:1700_T/C", "MT:567_A/AC", "MT:3397_A/G", "MT:7961_T/C", "COSM7419795")) # Remove several variants that are FP
+
+dayama_numts_tbl = read_tsv("dayama_2014_numts.txt")
+somatic_variant_df = anti_join(somatic_variant_df_raw, dayama_numts_tbl, by = c("mut_pos", "ref", "alt"))
+
+li_numts_likely_tbl = unique(read_tsv("li_2012_likely_numts.txt"))
+somatic_variant_df = anti_join(somatic_variant_df, li_numts_likely_tbl, by = c("mut_pos", "alt"))
+
+# li_numts_all_tbl = read_tsv("li_2012_all_numts.txt") %>% 
+#   dplyr::select(mut_pos, ref, A, T, C, G) %>% 
+#   tidyr::pivot_longer(cols = c("A", "T", "C", "G"), names_to = "alt", values_to = "nr_alt") %>% 
+#   dplyr::filter(nr_alt >= 1)
+# li_numts_all_tbl = dplyr::filter(li_numts_all_tbl, nr_alt >= 20)
 
 
 # Filter out AHH1 variants that did not occur in the subclones.
@@ -212,6 +251,29 @@ saveRDS(indel_df, file.path(r_wd, "indel_df.rds"))
 saveRDS(somatic_variant_annotate, file.path(r_wd, "somatic_variant_annotate.rds"))
 
 #somatic_variant_df=readRDS(file.path(r_wd, "somatic_variant_df.rds"))
+
+
+alt_ads = rbind(somatic_variant_df, indel_df[,colnames(indel_df) != "indel"]) %>% 
+  dplyr::filter(overall_freq >= 2) %>% 
+  pull(alt_ad)
+quantile(alt_ads)
+quantile(rbind(somatic_variant_df, indel_df[,colnames(indel_df) != "indel"])$alt_ad)
+rbind(somatic_variant_df, indel_df[,colnames(indel_df) != "indel"]) %>% dplyr::filter(patient_freq > 1 & !duplicated(variant))
+rbind(somatic_variant_df, indel_df[,colnames(indel_df) != "indel"]) %>% dplyr::filter(patient_freq > 1 & !duplicated(variant) & max_freq-patient_freq == 1)
+
+# Clean up variant table for publication
+tr_tbl = read_tsv("omzet_table_full.txt")
+tr_string = tr_tbl$new
+names(tr_string) = tr_tbl$old
+all_variant_df = rbind(somatic_variant_annotate, indel_annotate[,colnames(indel_annotate) != "indel"])
+all_variant_df = all_variant_df %>% 
+  dplyr::mutate(patient = str_remove(patient, "PMC")) %>% 
+  dplyr::left_join(name_convert_tbl, by = c("patient" = "old")) %>% 
+  dplyr::mutate(patient = ifelse(is.na(new), patient, new),
+                sample = str_replace_all(sample, tr_string)) %>% 
+  dplyr::select(-new) %>% 
+  dplyr::select(patient, sample, mut_pos, ref, alt, genotype, variant, VAF, ref_ad, alt_ad, gene, effect, effect_type)
+write_tsv(all_variant_df, "all_variants_clean.txt")
 
 # Calculate number of mutations per sample
 total_sample_mutation_freq <- count_variant_occurences(combined_mito_df = somatic_variant_df,
@@ -309,7 +371,6 @@ plot_save_rainfall(intestine_variants, "Small intestine")
 plot_save_rainfall(liver_variants, "Liver")
 plot_save_rainfall(aml_variants, "aml")
 plot_save_rainfall(hsct_recipient_variants, "hsct")
-plot_save_rainfall(trisomy_variants, "trisomy")
 plot_save_rainfall(dx_variants, "dx1")
 plot_save_rainfall(dx2_variants, "dx2")
 plot_save_rainfall(cancer_variants, "1st_cancer")
@@ -369,6 +430,10 @@ healthy_freq <- subset(total_sample_mutation_freq,
                          !(patient == 'AHH1') &
                          bulk == 'clone') %>% 
   dplyr::mutate(cov = factor(cov, levels = c(15, 30)))
+
+glm_mixed_m <- glmer(freq ~ age + (0 + age | patient), 
+                         data = healthy_freq, 
+                         family = poisson(link = "identity"))
 
 glm_mixed_log_m <- glmer(freq ~ age + (0 + age | patient), 
                             data = healthy_freq, 
@@ -452,31 +517,39 @@ tissue_glm_m = glm(freq ~ age + state, data = tissue_freq, family = poisson(link
 summary(tissue_glm_m)
 
 # Does sequencing depth have an effect by itself? No.
-cov_m = glm(freq ~ age + cov, data = healthy_freq, family = poisson(link = "identity"))
-summary(cov_m)
-saveRDS(cov_m, file.path(model_wd, "sequencing_depth.rds"))
-seqdepth_fig = plot_cov_model2(cov_m)
-ggsave(file.path(plotdir, "mut_accumulation", "sequencing_depth.pdf"), seqdepth_fig)
+# combi_freq = subset(total_sample_mutation_freq, 
+#                     (state %in% c("healthy", "recipient", "FU", "DX1", "DX2", "healthy_colon", "healthy_intestine", "healthy_liver")) &
+#                       !(patient == 'AHH1') &
+#                       bulk == 'clone') %>% 
+#   dplyr::mutate(cov = factor(cov, levels = c(15, 30))) %>% 
+#   dplyr::mutate(state = factor(state, levels = c("healthy", "recipient", "FU", "DX1", "DX2", "healthy_colon", "healthy_intestine", "healthy_liver")))
+# cov_m = glm(freq ~ age + cov, data = healthy_freq, family = poisson(link = "identity"))
+# summary(cov_m)
+# saveRDS(cov_m, file.path(model_wd, "sequencing_depth.rds"))
+# seqdepth_fig = plot_cov_model2(cov_m)
+# ggplot(healthy_freq, aes(x = age, y = freq, color = cov)) +
+#   geom_jitter(size = 1, width = 0.2, height = 0.1)
+# ggsave(file.path(plotdir, "mut_accumulation", "sequencing_depth.pdf"), seqdepth_fig)
 
 # Does HSCT have more mutations
-hsct_freq = subset(total_sample_mutation_freq,
-                   !(patient == "AHH1") &
-                     (state == "healthy" | state == "recipient") &
-                     bulk == "clone") %>% 
-  dplyr::mutate(state = dplyr::recode(state, "healthy" = "Healthy blood", "recipient" = "HSCT recipient"),
-                state = factor(state, levels = c("Healthy blood", "HSCT recipient")))
-glm_m_mixed = glmer(freq ~ state + age + (1 | patient), family = poisson(link = "log"), data = hsct_freq)
-glm_m = glm(freq ~ state + age, family = poisson(link = "identity"), data = hsct_freq)
-BIC(glm_m_mixed, glm_m)
-AIC(glm_m_mixed, glm_m)
-
-saveRDS(glm_m, file.path(model_wd, "hsct_ageline.rds"))
-hsct_ageline_fig = plot_hsct_model(glm_m)
-ggsave(file.path(plotdir, "mut_accumulation", "hsct_ageline.pdf"), hsct_ageline_fig)
+# hsct_freq = subset(total_sample_mutation_freq,
+#                    !(patient == "AHH1") &
+#                      (state == "healthy" | state == "recipient") &
+#                      bulk == "clone") %>% 
+#   dplyr::mutate(state = dplyr::recode(state, "healthy" = "Healthy blood", "recipient" = "HSCT recipient"),
+#                 state = factor(state, levels = c("Healthy blood", "HSCT recipient")))
+# glm_m_mixed = glmer(freq ~ state + age + (1 | patient), family = poisson(link = "log"), data = hsct_freq)
+# glm_m = glm(freq ~ state + age, family = poisson(link = "identity"), data = hsct_freq)
+# BIC(glm_m_mixed, glm_m)
+# AIC(glm_m_mixed, glm_m)
+# 
+# saveRDS(glm_m, file.path(model_wd, "hsct_ageline.rds"))
+# hsct_ageline_fig = plot_hsct_model(glm_m)
+# ggsave(file.path(plotdir, "mut_accumulation", "hsct_ageline.pdf"), hsct_ageline_fig)
 
 # Plot mean of hsct, to compare recipient and donor of same patient/hsct
-mean_hsct_fig = plot_mean_hsct_freq(hsct_freq)
-ggsave(file.path(plotdir, "mut_accumulation", "hsct_meanfreq.pdf"), mean_hsct_fig)
+# mean_hsct_fig = plot_mean_hsct_freq(hsct_freq)
+# ggsave(file.path(plotdir, "mut_accumulation", "hsct_meanfreq.pdf"), mean_hsct_fig)
 
 
 # Combine DX1, FU and DX2.
@@ -497,6 +570,7 @@ combi_dx1_fu_dx2_freq = dplyr::filter(total_sample_mutation_freq,
   dplyr::mutate(state = dplyr::recode(state, "healthy" = "Healthy blood", "DX1" = "HSPCs leukemia patients", "FU" = "HSPCs leukemia patients", "DX2" = "HSPCs leukemia patients"),
                 state = factor(state, levels = c("Healthy blood", "HSPCs leukemia patients")))
 m = glm(freq ~ state + age, family = poisson(link = "identity"), data = combi_dx1_fu_dx2_freq)
+get_ci_params(m)
 saveRDS(m, file.path(model_wd, "chemo_dx1_fu_dx2_ageline.rds"))
 dx1_fu_dx2_ageline_fig = plot_chemo_model(m)
 ggsave(file.path(plotdir, "mut_accumulation", "dx1_fu_dx2_ageline.pdf"), dx1_fu_dx2_ageline_fig)
@@ -511,6 +585,13 @@ outlier_pvals_tb = tibble("sample" = combi_dx1_fu_dx2_freq$sample, "p" = outlier
   dplyr::filter(p < 0.05)
 write_tsv(outlier_pvals_tb, file.path(r_wd, "dx1_fu_dx2_outliers.txt"))
 
+high_mut_samples = combi_dx1_fu_dx2_freq %>% dplyr::filter(state == "HSPCs leukemia patients" & freq >= 4) %>% pull(sample)
+low_mut_samples = combi_dx1_fu_dx2_freq %>% dplyr::filter(state == "HSPCs leukemia patients" & freq < 4) %>% pull(sample)
+high_mut_vafs = somatic_variant_df %>% dplyr::filter(sample %in% high_mut_samples) %>% dplyr::pull(VAF)
+low_mut_vafs = somatic_variant_df %>% dplyr::filter(sample %in% low_mut_samples) %>% dplyr::pull(VAF)
+quantile(high_mut_vafs)
+quantile(low_mut_vafs)
+wilcox.test(high_mut_vafs, low_mut_vafs)
 
 # Do the chemo 2nd cancer samples have more mutations?
 chemo_2ndcancer_freq = dplyr::filter(total_sample_mutation_freq,
@@ -520,6 +601,7 @@ chemo_2ndcancer_freq = dplyr::filter(total_sample_mutation_freq,
   dplyr::mutate(state = dplyr::recode(state, "AML" = "2nd Leukemia", "ALL" = "2nd Leukemia", "healthy" = "Healthy blood"),
                 state = factor(state, levels = c("Healthy blood", "2nd Leukemia")))
 m = glm(freq ~ state + age, family = poisson(link = "identity"), data = chemo_2ndcancer_freq)
+get_ci_params(m)
 saveRDS(m, file.path(model_wd, "chemo_2nd_cancer_ageline.rds"))
 chemo_2ndcancer_ageline_fig = plot_chemo_model(m)
 ggsave(file.path(plotdir, "mut_accumulation", "chemo_2nd_cancer_ageline.pdf"), chemo_2ndcancer_ageline_fig)
@@ -534,6 +616,63 @@ outlier_pvals_tb = tibble("sample" = chemo_2ndcancer_freq$sample, "p" = outlier_
                           "freq" = chemo_2ndcancer_freq$freq, "state" = chemo_2ndcancer_freq$state) %>%
   dplyr::filter(p < 0.05)
 write_tsv(outlier_pvals_tb, file.path(r_wd, "chemo_2nd_cancer_outliers.txt"))
+
+# DX1 vs leukemia
+dx1_and_leukemia_patients =total_sample_mutation_freq %>% 
+  dplyr::select(patient, state_name) %>% 
+  dplyr::filter(state_name == "Diagnosis" | state_name == "Leukemia") %>% 
+  unique() %>%
+  dplyr::count(patient) %>% 
+  dplyr::filter(n == 2) %>% 
+  pull(patient)
+dx1_vs_leukemia_freq = dplyr::filter(total_sample_mutation_freq,
+                                      (state_name == "Diagnosis" | state_name == "Leukemia") &
+                                       patient %in% dx1_and_leukemia_patients &
+                                        bulk == "clone" &
+                                        !(patient == "AHH1")) %>% 
+  dplyr::mutate(state_name = factor(state_name, levels = c("Diagnosis", "Leukemia")))
+name_convert_tbl = read_tsv("omzet_table_full.txt", col_names = c("patient", "new_patient_name"))
+dx1_vs_leukemia_freq = dx1_vs_leukemia_freq %>%
+  dplyr::mutate(patient = str_remove(patient, "PMC")) %>% 
+  left_join(name_convert_tbl, by = "patient") %>% 
+  dplyr::select(-patient) %>% 
+  dplyr::rename(patient = new_patient_name)
+
+m = glm(freq ~ state_name + patient, family = poisson(link = "identity"), data = dx1_vs_leukemia_freq)
+#m = glm(freq ~ state_name + age, family = poisson(link = "identity"), data = dx1_vs_leukemia_freq)
+get_ci_params(m)
+saveRDS(m, file.path(model_wd, "dx1_vs_leukemia.rds"))
+dx1_vs_leukemia_fig = plot_dx1_vs_leukemia(m)
+ggsave(file.path(plotdir, "mut_accumulation", "dx1_vs_leukemia.pdf"), dx1_vs_leukemia_fig)
+
+
+#first vs second cancer
+first_and_second_leukemia_patients =total_sample_mutation_freq %>% 
+  dplyr::select(patient, state_name) %>% 
+  dplyr::filter(state_name == "2nd Leukemia" | state_name == "Leukemia") %>% 
+  unique() %>%
+  dplyr::count(patient) %>% 
+  dplyr::filter(n == 2) %>% 
+  pull(patient)
+first_vs_second_cancer_freq = dplyr::filter(total_sample_mutation_freq,
+                                     (state_name == "2nd Leukemia" | state_name == "Leukemia") &
+                                       patient %in% first_and_second_leukemia_patients &
+                                       bulk == "clone" &
+                                       !(patient == "AHH1")) %>% 
+  dplyr::mutate(state_name = factor(state_name, levels = c("Leukemia", "2nd Leukemia")))
+first_vs_second_cancer_freq = first_vs_second_cancer_freq %>%
+  dplyr::mutate(patient = str_remove(patient, "PMC")) %>%
+  left_join(name_convert_tbl, by = "patient") %>%
+  dplyr::select(-patient) %>%
+  dplyr::rename(patient = new_patient_name)
+
+# Model doesn't work because there are too few samples.
+m = glm(freq ~ age + state_name, family = poisson(link = "identity"), data = first_vs_second_cancer_freq)
+# get_ci_params(m)
+# saveRDS(m, file.path(model_wd, "dx1_vs_leukemia.rds"))
+saveRDS(first_vs_second_cancer_freq, file.path(model_wd, "first_vs_second_cancer_freq.rds"))
+first_vs_second_cancer_fig = plot_first_vs_second_aml(first_vs_second_cancer_freq)
+ggsave(file.path(plotdir, "mut_accumulation", "first_vs_second_cancer.pdf"), first_vs_second_cancer_fig)
 
 
 #Do the CB samples treated with different chemos show differences.
@@ -556,7 +695,8 @@ cb_chemo_fig = plot_cb_chemo(cb_chemo_freq)
 ggsave(file.path(plotdir, "mut_accumulation", "CB_chemo.pdf"), cb_chemo_fig)
 
 
-### Modeling of CNV
+
+### Modeling of CNV___________________________________________________________________________________
 # ageline
 healthy_cnv <- as.data.frame(subset(cnv_df, 
                       (state == 'healthy') &
@@ -619,7 +759,7 @@ ggsave(file.path(plotdir, "copy_numbers", "liver_cnv_ageline.pdf"), cnv_ageline_
 
 
 # Compare mean cnv between tissues
-tissue_cnv = rbind(healthy_cnv, colon_cnv, intestine_cnv, liver_cnv)
+tissue_cnv = rbind(healthy_cnv, colon_cnv, intestine_cnv)
 tissue_model = lme(cnv_mean ~ state, 
     random = ~ 1 | patient, 
     data = tissue_cnv)
@@ -635,10 +775,14 @@ ggpredict(colon_intestine_model)
 
 
 # Check if age has an effect if all tissues are pooled (No)
-combi_tissues_cnv_model <- lme(cnv_mean ~ age + state, 
+# age_cnv <- as.data.frame(subset(cnv_df,
+#                                 (state %in% c("healthy", "recipient", "FU", "DX1", "DX2")) &
+#                                   !(patient == 'AHH1') &
+#                                   mt_mean > 1000 &
+#                                   bulk == 'clone'))
+combi_tissues_cnv_model <- lme(cnv_mean ~ age * state, 
                                random = ~ 0 + age | patient, 
                                data = tissue_cnv)
-
 
 # Does cov have an effect by itself:
 cov_m <- lme(cnv_mean ~ cov, random = ~ 1 | patient, 
@@ -692,106 +836,106 @@ aml_cnv_fig = plot_aml_cnv_model(aml_cnv)
 ggsave(file.path(plotdir, "copy_numbers", "cnv_aml.pdf"), aml_cnv_fig)
 
 # Does hsct have an effect on cnv
-hsct_cnv = subset(cnv_df,
-                  !(patient == "AHH1") &
-                    (state == "healthy" | state == "recipient") &
-                    mt_mean > 1000 &
-                    bulk == "clone" &
-                    source == "Boxtel") %>% 
-  dplyr::mutate(state = dplyr::recode(state, "healthy" = "Healthy blood", "recipient" = "HSCT recipient"),
-                state = factor(state, levels = c("Healthy blood", "HSCT recipient")))
-
-
-hsct_m = lme(cnv_mean ~ age + state, random = ~ 1 | patient, data = hsct_cnv)
-hsct_m2 = lme(cnv_mean ~ state, random = ~ 1 | patient, data = hsct_cnv)
-BIC(hsct_m, hsct_m2)
-AIC(hsct_m, hsct_m2)
-
-
-
-saveRDS(hsct_m2, file.path(model_wd, "cnv_hsct.rds"))
-hsct_cnv_fig = plot_cnv_model(hsct_m2)
-ggsave(file.path(plotdir, "copy_numbers", "cnv_hsct.pdf"), hsct_cnv_fig)
-
-# Plot mean of hsct, to compare recipient and donor of same patient/hsct
-mean_hsct_cnv_fig = plot_mean_hsct_cnv(hsct_cnv)
-ggsave(file.path(plotdir, "copy_numbers", "hsct_meancnv.pdf"), mean_hsct_cnv_fig)
-
-
-# Check if there is an effect of the time after transplant
-time_after_transplant = tibble("patient" = c("HSCT2", "HSCT3", "HSCT4", "HSCT8", "HSCT10", "9386", "HSCT13", "HSCT14", "HSCT5"), 
-                               "time_transplant" = c(0.416666667, 1.416666667, 3.333333333, 0.083333333, 2.416666667, 0.25, 24.5833, 16.25, 2.5))
-recipient_cnv = hsct_cnv %>% 
-  dplyr::filter(hsct == "recipient") %>% 
-  left_join(time_after_transplant, by = "patient")
-recipient_m = lme(cnv_mean ~ time_transplant, random = ~ 1 | patient, data = recipient_cnv)
-saveRDS(recipient_m, file.path(model_wd, "cnv_hsct_time.rds"))
-recipient_fig = plot_recipient_time_model(recipient_m)
-ggsave(file.path(plotdir, "copy_numbers", "hsct_time_transplant.pdf"), recipient_fig)
-
-hsct_sig_samples = c("9386FU2D19", "9386FUHSC1B15", "9386FUHSC1P23", "PMC9386-DX2BMWT-HSP1C8", "PMC9386-DX2BMWT-HSP2I16", 
-                     "PMC9386-DX2BMWT-HSP2I8", "FPHSCT10RPBMPP2", "FPHSCT10RPBMPP8", "PMCHSCT10-RPBWT-HSPHSCT10-2J12", "PMCHSCT10-RPBWT-HSPHSCT10-1J15")
-
-recipient_cnv = recipient_cnv %>% 
-  dplyr::mutate(hsct_sig = ifelse(sample %in% hsct_sig_samples, "SBSA", "not_SBSA"))
+# hsct_cnv = subset(cnv_df,
+#                   !(patient == "AHH1") &
+#                     (state == "healthy" | state == "recipient") &
+#                     mt_mean > 1000 &
+#                     bulk == "clone" &
+#                     source == "Boxtel") %>% 
+#   dplyr::mutate(state = dplyr::recode(state, "healthy" = "Healthy blood", "recipient" = "HSCT recipient"),
+#                 state = factor(state, levels = c("Healthy blood", "HSCT recipient")))
+# 
+# 
+# hsct_m = lme(cnv_mean ~ age + state, random = ~ 1 | patient, data = hsct_cnv)
+# hsct_m2 = lme(cnv_mean ~ state, random = ~ 1 | patient, data = hsct_cnv)
+# BIC(hsct_m, hsct_m2)
+# AIC(hsct_m, hsct_m2)
+# 
+# 
+# 
+# saveRDS(hsct_m2, file.path(model_wd, "cnv_hsct.rds"))
+# hsct_cnv_fig = plot_cnv_model(hsct_m2)
+# ggsave(file.path(plotdir, "copy_numbers", "cnv_hsct.pdf"), hsct_cnv_fig)
+# 
+# # Plot mean of hsct, to compare recipient and donor of same patient/hsct
+# mean_hsct_cnv_fig = plot_mean_hsct_cnv(hsct_cnv)
+# ggsave(file.path(plotdir, "copy_numbers", "hsct_meancnv.pdf"), mean_hsct_cnv_fig)
+# 
+# 
+# # Check if there is an effect of the time after transplant
+# time_after_transplant = tibble("patient" = c("HSCT2", "HSCT3", "HSCT4", "HSCT8", "HSCT10", "9386", "HSCT13", "HSCT14", "HSCT5"), 
+#                                "time_transplant" = c(0.416666667, 1.416666667, 3.333333333, 0.083333333, 2.416666667, 0.25, 24.5833, 16.25, 2.5))
+# recipient_cnv = hsct_cnv %>% 
+#   dplyr::filter(hsct == "recipient") %>% 
+#   left_join(time_after_transplant, by = "patient")
+# recipient_m = lme(cnv_mean ~ time_transplant, random = ~ 1 | patient, data = recipient_cnv)
+# saveRDS(recipient_m, file.path(model_wd, "cnv_hsct_time.rds"))
+# recipient_fig = plot_recipient_time_model(recipient_m)
+# ggsave(file.path(plotdir, "copy_numbers", "hsct_time_transplant.pdf"), recipient_fig)
+# 
+# hsct_sig_samples = c("9386FU2D19", "9386FUHSC1B15", "9386FUHSC1P23", "PMC9386-DX2BMWT-HSP1C8", "PMC9386-DX2BMWT-HSP2I16", 
+#                      "PMC9386-DX2BMWT-HSP2I8", "FPHSCT10RPBMPP2", "FPHSCT10RPBMPP8", "PMCHSCT10-RPBWT-HSPHSCT10-2J12", "PMCHSCT10-RPBWT-HSPHSCT10-1J15")
+# 
+# recipient_cnv = recipient_cnv %>% 
+#   dplyr::mutate(hsct_sig = ifelse(sample %in% hsct_sig_samples, "SBSA", "not_SBSA"))
 
 # Check if the blood type influences copy numbers.
-sample_type_eline = read_tsv("samples_types_Eline.txt", col_types = c("ccc"))
-pb_bm_cnv_df = subset(cnv_df,
-                  !(patient == "AHH1") &
-                    (state == "healthy" | state == "recipient" | state == "DX1" | state == "DX2" | state == "FU") &
-                    mt_mean > 1000 &
-                    bulk == "clone" &
-                    source == "Boxtel") %>% 
-  dplyr::left_join(sample_type_eline, by = c("patient", "state")) %>% 
-  dplyr::mutate(state = dplyr::recode(state, "healthy" = "Normal blood", "recipient" = "HSCT recipient", "DX1" = "Normal blood", 
-                                      "DX2" = "Normal blood", "FU" = "Normal blood"),
-                state = factor(state, levels = c("Normal blood", "HSCT recipient"))) %>% 
-  dplyr::mutate(blood_type = case_when(
-    sample == "N01BMHSPCCB8" ~ "BM",
-    patient == "CB112" ~ "CB",
-    patient %in% c("HSCT13", "HSCT14") ~ "PB",
-    patient %in% c("HSCT8") ~ "BM",
-    patient %in% c("AC33", "AC41", "ACC55", "AC63", "BCH") ~ "BM",
-    patient %in% c("PMC16332", "PMC17556", "PMC20106", "PMC21586", "PMC21636", "PMC22813", "PMC07276", "PMC09357") ~ "BM",
-    patient %in% c("MH2", "NR1", "NR2") ~ "Li",
-    hsct == "donor" ~ "BM",
-    hsct == "recipient" ~ "PB"
-  )) %>% 
-  dplyr::mutate(blood_type = ifelse(is.na(Sample_type), blood_type, Sample_type)) %>% 
-  dplyr::filter(!is.na(blood_type))
-
-
-blood_type_names = tibble("blood_type" = c("BM", "CB", "Li", "PB"), "full_blood_type" = c("Bone marrow", "Cord blood", "Liver", "Peripheral blood"))
-pb_bm_cnv_df = dplyr::left_join(pb_bm_cnv_df, blood_type_names, by = "blood_type")
-bloodtype_m = lme(cnv_mean ~ state + blood_type, random = ~ 1 | patient, data = pb_bm_cnv_df)
-saveRDS(bloodtype_m, file.path(model_wd, "cnv_bloodtype_transplant.rds"))
-bloodtype_cnv_fig = plot_cnv_model(bloodtype_m, var = "full_blood_type", col = "state", remove_guide = FALSE, plot_p = FALSE)
-bloodtype_cnv_fig2 = plot_cnv_model(bloodtype_m, var = "state", col = "blood_type", remove_guide = FALSE, plot_p = FALSE)
-ggsave(file.path(plotdir, "copy_numbers", "hsct_bloodtype2.pdf"), ggarrange(bloodtype_cnv_fig, bloodtype_cnv_fig2))
-ggsave(file.path(plotdir, "copy_numbers", "hsct_bloodtype3.pdf"), bloodtype_cnv_fig)
-
-# effect of blood type
-bloodtype_m2 = lme(cnv_mean ~ blood_type, random = ~ 1 | patient, data = pb_bm_cnv_df)
-saveRDS(bloodtype_m2, file.path(model_wd, "cnv_bloodtype.rds"))
-
-# Restrict to non-transplant
-nontrans_cnv_df = dplyr::filter(pb_bm_cnv_df, state == "Normal blood")
-summary(lme(cnv_mean ~ blood_type, random = ~ 1 | patient, data = nontrans_cnv_df))
-
-# Effect of transplant or not
-bloodtype_m3 = lme(cnv_mean ~ state, random = ~ 1 | patient, data = pb_bm_cnv_df)
-saveRDS(bloodtype_m3, file.path(model_wd, "cnv_transplant.rds"))
-
-# Restrict to PB
-pb_cnv_df = dplyr::filter(pb_bm_cnv_df, blood_type == "PB")
-summary(lme(cnv_mean ~ state, random = ~ 1 | patient, data = pb_cnv_df))
-
-# Make figure with only BM and PB
-pb_bm_cnv_df2 = dplyr::filter(pb_bm_cnv_df, blood_type %in% c("BM", "PB"))
-bloodtype_m = lme(cnv_mean ~ blood_type, random = ~ 1 | patient, data = pb_bm_cnv_df2)
-bloodtype_cnv_fig = plot_cnv_model(bloodtype_m, var = "blood_type", col = "state", remove_guide = FALSE, plot_p = T)
-ggsave(file.path(plotdir, "copy_numbers", "hsct_bloodtype4.pdf"), bloodtype_cnv_fig)
+# sample_type_eline = read_tsv("samples_types_Eline.txt", col_types = c("ccc"))
+# pb_bm_cnv_df = subset(cnv_df,
+#                   !(patient == "AHH1") &
+#                     (state == "healthy" | state == "recipient" | state == "DX1" | state == "DX2" | state == "FU") &
+#                     mt_mean > 1000 &
+#                     bulk == "clone" &
+#                     source == "Boxtel") %>% 
+#   dplyr::left_join(sample_type_eline, by = c("patient", "state")) %>% 
+#   dplyr::mutate(state = dplyr::recode(state, "healthy" = "Normal blood", "recipient" = "HSCT recipient", "DX1" = "Normal blood", 
+#                                       "DX2" = "Normal blood", "FU" = "Normal blood"),
+#                 state = factor(state, levels = c("Normal blood", "HSCT recipient"))) %>% 
+#   dplyr::mutate(blood_type = case_when(
+#     sample == "N01BMHSPCCB8" ~ "BM",
+#     patient == "CB112" ~ "CB",
+#     patient %in% c("HSCT13", "HSCT14") ~ "PB",
+#     patient %in% c("HSCT8") ~ "BM",
+#     patient %in% c("AC33", "AC41", "ACC55", "AC63", "BCH") ~ "BM",
+#     patient %in% c("PMC16332", "PMC17556", "PMC20106", "PMC21586", "PMC21636", "PMC22813", "PMC07276", "PMC09357") ~ "BM",
+#     patient %in% c("MH2", "NR1", "NR2") ~ "Li",
+#     hsct == "donor" ~ "BM",
+#     hsct == "recipient" ~ "PB"
+#   )) %>% 
+#   dplyr::mutate(blood_type = ifelse(is.na(Sample_type), blood_type, Sample_type)) %>% 
+#   dplyr::filter(!is.na(blood_type))
+# 
+# 
+# blood_type_names = tibble("blood_type" = c("BM", "CB", "Li", "PB"), "full_blood_type" = c("Bone marrow", "Cord blood", "Liver", "Peripheral blood"))
+# pb_bm_cnv_df = dplyr::left_join(pb_bm_cnv_df, blood_type_names, by = "blood_type")
+# bloodtype_m = lme(cnv_mean ~ state + blood_type, random = ~ 1 | patient, data = pb_bm_cnv_df)
+# saveRDS(bloodtype_m, file.path(model_wd, "cnv_bloodtype_transplant.rds"))
+# bloodtype_cnv_fig = plot_cnv_model(bloodtype_m, var = "full_blood_type", col = "state", remove_guide = FALSE, plot_p = FALSE)
+# bloodtype_cnv_fig2 = plot_cnv_model(bloodtype_m, var = "state", col = "blood_type", remove_guide = FALSE, plot_p = FALSE)
+# ggsave(file.path(plotdir, "copy_numbers", "hsct_bloodtype2.pdf"), ggarrange(bloodtype_cnv_fig, bloodtype_cnv_fig2))
+# ggsave(file.path(plotdir, "copy_numbers", "hsct_bloodtype3.pdf"), bloodtype_cnv_fig)
+# 
+# # effect of blood type
+# bloodtype_m2 = lme(cnv_mean ~ blood_type, random = ~ 1 | patient, data = pb_bm_cnv_df)
+# saveRDS(bloodtype_m2, file.path(model_wd, "cnv_bloodtype.rds"))
+# 
+# # Restrict to non-transplant
+# nontrans_cnv_df = dplyr::filter(pb_bm_cnv_df, state == "Normal blood")
+# summary(lme(cnv_mean ~ blood_type, random = ~ 1 | patient, data = nontrans_cnv_df))
+# 
+# # Effect of transplant or not
+# bloodtype_m3 = lme(cnv_mean ~ state, random = ~ 1 | patient, data = pb_bm_cnv_df)
+# saveRDS(bloodtype_m3, file.path(model_wd, "cnv_transplant.rds"))
+# 
+# # Restrict to PB
+# pb_cnv_df = dplyr::filter(pb_bm_cnv_df, blood_type == "PB")
+# summary(lme(cnv_mean ~ state, random = ~ 1 | patient, data = pb_cnv_df))
+# 
+# # Make figure with only BM and PB
+# pb_bm_cnv_df2 = dplyr::filter(pb_bm_cnv_df, blood_type %in% c("BM", "PB"))
+# bloodtype_m = lme(cnv_mean ~ blood_type, random = ~ 1 | patient, data = pb_bm_cnv_df2)
+# bloodtype_cnv_fig = plot_cnv_model(bloodtype_m, var = "blood_type", col = "state", remove_guide = FALSE, plot_p = T)
+# ggsave(file.path(plotdir, "copy_numbers", "hsct_bloodtype4.pdf"), bloodtype_cnv_fig)
 
 
 # Compare all the cnvs of the chemo/2nd cancer project
@@ -885,6 +1029,8 @@ freq_cnv_fig = plot_freq_cnv_model(m)
 ggsave(file.path(plotdir, "healthy_freq_cnv_correlation.pdf"), freq_cnv_fig)
 
 
+
+
 # Check if the samples with more nuclear mutations also have more mitochondrial mutations
 
 # Load nuclear data
@@ -933,6 +1079,7 @@ above_below_ageline_fig = plot_above_below_ageline(higher_lower_muts)
 ggsave(file.path(plotdir, "above_below_agelines_nuclear_mito.pdf"), above_below_ageline_fig)
 
 
+
 # Look at pcawg data.
 pcawg_cancer_type = read_tsv("PCAWG_donors_metadata.tsv", col_types = cols_only(submitted_donor_id = col_character(),
                                                                                 histology_abbreviation = col_character(),
@@ -962,14 +1109,25 @@ blood_cancer_types = c("Lymph-BNHL",
                        "ALL",
                        "AML")
 colon_cancer_types = c("ColoRect-AdenoCA")
-####intestine_cancer_types = c("ColoRect−AdenoCA") CHECK THIS. IS THERE SOMETHING I CAN USE
 liver_cancer_types = c("Biliary-AdenoCA")
 blood_high_mut_samples = compare_pcawg_freq(pcawg_freq, "healthy", "Healthy blood", total_sample_mutation_freq, blood_cancer_types, "Blood cancer", blood_glm_m, pcawg)
 colon_high_mut_samples = compare_pcawg_freq(pcawg_freq, "healthy_colon", "Normal colon", total_sample_mutation_freq, colon_cancer_types, "Colon cancer", colon_glm_m, pcawg)
 intestine_high_mut_samples = compare_pcawg_freq(pcawg_freq, "healthy_intestine", "Normal intestine", total_sample_mutation_freq, intestine_cancer_types, "small_intestine_cancer", intestine_glm_m, pcawg)
 liver_high_mut_samples = compare_pcawg_freq(pcawg_freq, "healthy_liver", "Normal liver", total_sample_mutation_freq, liver_cancer_types, "liver_cancer", liver_glm_m, pcawg)
 
+
 pcawg_freq_blood = dplyr::filter(pcawg_f)
+
+# Compare colon ages
+healthy_ages = sample_reference_df %>% dplyr::filter(state == "healthy_colon") %>% pull(age)
+cancer_ages = pcawg %>% dplyr::filter(histology_abbreviation %in% colon_cancer_types) %>% pull(donor_age_at_diagnosis) %>% as.numeric()
+mean(healthy_ages)
+mean(cancer_ages)
+end_overlap = min(c(max(cancer_ages), max(healthy_ages)))
+start_overlap = max(c(min(cancer_ages), min(healthy_ages)))
+end_overlap - start_overlap
+sum(healthy_ages > start_overlap & healthy_ages < end_overlap) / length(healthy_ages)
+sum(cancer_ages > start_overlap & cancer_ages < end_overlap) / length(cancer_ages)
 
 
 # pcawg spectra
@@ -1014,6 +1172,32 @@ blood_colon_profile_fig = plot_96_profile(mut_mat)
 ggsave(file.path(plotdir, "pcawg", "blood_colon_profile.pdf"), blood_colon_profile_fig)
 saveRDS(mut_mat, file.path(plotdir, "pcawg", "blood_colon_mut_mat.rds"))
 
+# Compare light strand of high mut colon with low mut colon
+colon_pcawg_snv = pcawg_snv %>% 
+  dplyr::filter(cancer_type %in% colon_cancer_types)
+hig_mut_colon = dplyr::filter(colon_pcawg_snv, sample_id %in% colon_high_mut_samples)
+low_mut_colon = dplyr::filter(colon_pcawg_snv, !sample_id %in% colon_high_mut_samples)
+spec_high_colon_l = get_mt_split_spectra(hig_mut_colon, ref_genome, remove_duplis = FALSE)
+spec_low_colon_l = get_mt_split_spectra(low_mut_colon, ref_genome, remove_duplis= FALSE)
+spec_m = rbind(spec_high_colon_l$spec_c_t, spec_low_colon_l$spec_c_t)[,-3]
+spec_m = spec_m[,colSums(spec_m)>=1]
+chisq.test(spec_m, simulate.p.value = TRUE)
+cos_sim(unlist(spec_high_colon_l$spec_c_t), unlist(spec_low_colon_l$spec_c_t))
+
+
+blood_gr = to_granges_mt(blood_pcawg_snv, remove_duplis = FALSE)
+blood_gr = blood_gr[blood_gr$ref %in% c("C", "T")]
+colon_gr = to_granges_mt(colon_pcawg_snv, remove_duplis = FALSE)
+colon_gr = colon_gr[colon_gr$ref %in% c("C", "T")]
+
+grl = GRangesList(blood_gr, colon_gr)
+names(grl) = c(paste0("Blood cancer \nNo. mutations = ", length(blood_gr)),
+               paste0("Colon cancer \nNo. mutations = ", length(colon_gr)))
+mut_mat = mut_matrix(grl, ref_genome)
+pcawg_profile_comparison_fig = plot_compare_profiles(mut_mat[,1], mut_mat[,2], profile_names = names(grl))
+blood_colon_profile_fig = plot_96_profile(mut_mat)
+ggsave(file.path(plotdir, "pcawg", "blood_colon_profile.pdf"), blood_colon_profile_fig)
+saveRDS(mut_mat, file.path(plotdir, "pcawg", "blood_colon_mut_mat.rds"))
 
 
 cos_sim(mut_mat[33:48,1], mut_mat[33:48,2])
